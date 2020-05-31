@@ -6,10 +6,10 @@
 #define CRYPTO_NOOVERLAP 1 // Shall be set to one.
 
 /* SELECT INSTANCE HERE */
-//#define paefforkskinnyb64t192n48
+#define paefforkskinnyb64t192n48
 //#define paefforkskinnyb128t192n48
 //#define paefforkskinnyb128t256n112
-#define paefforkskinnyb128t288n104
+//#define paefforkskinnyb128t288n104
 //#define saefforkskinnyb128t192n56
 //#define saefforkskinnyb128t256n120
 

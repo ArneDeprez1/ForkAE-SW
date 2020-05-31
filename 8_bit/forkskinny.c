@@ -647,15 +647,29 @@ void forkInvert_64(unsigned char* inverse, unsigned char* C_other, unsigned char
 }
 
 
-uint8_t skinny64_sbox(uint8_t x);
+//uint8_t skinny64_sbox(uint8_t x);
+#define skinny64_sbox(x) \
+do { \
+	x = ~x; \
+	x = (((x >> 3) & (x >> 2)) & 0x11) ^ x; \
+	x = (((x << 1) & (x << 2)) & 0x88) ^ x; \
+	x = (((x << 1) & (x << 2)) & 0x44) ^ x; \
+	x = (((x >> 2) & (x << 1)) & 0x22) ^ x; \
+	x = ~x; \
+	x = ((x >> 1) & 0x77) | ((x << 3) & 0x88);\
+	} while (0)
+
 uint8_t skinny64_inv_sbox(uint8_t x);
 
 void skinny_round_64(uint8_t state[8], uint8_t *keyCells, int i){
 	uint8_t temp;
 
 	/* SubCell */
-	state[0] = skinny64_sbox(state[0]); state[1] = skinny64_sbox(state[1]); state[2] = skinny64_sbox(state[2]); state[3] = skinny64_sbox(state[3]);
-	state[4] = skinny64_sbox(state[4]); state[5] = skinny64_sbox(state[5]); state[6] = skinny64_sbox(state[6]); state[7] = skinny64_sbox(state[7]);
+	//state[0] = skinny64_sbox(state[0]); state[1] = skinny64_sbox(state[1]); state[2] = skinny64_sbox(state[2]); state[3] = skinny64_sbox(state[3]);
+	//state[4] = skinny64_sbox(state[4]); state[5] = skinny64_sbox(state[5]); state[6] = skinny64_sbox(state[6]); state[7] = skinny64_sbox(state[7]);
+	skinny64_sbox(state[0]); skinny64_sbox(state[1]); skinny64_sbox(state[2]); skinny64_sbox(state[3]);
+	skinny64_sbox(state[4]); skinny64_sbox(state[5]); skinny64_sbox(state[6]); skinny64_sbox(state[7]);
+
 
 	/* AddConstants */
 	state[0] ^=  ((RC[i] & 0xf) <<4);
@@ -723,7 +737,7 @@ void skinny_round_inv_64(uint8_t state[8], uint8_t *keyCells, int i){
 }
 
 
-uint8_t skinny64_sbox(uint8_t x){
+/*uint8_t skinny64_sbox(uint8_t x){
 	x = ~x;
 	x = (((x >> 3) & (x >> 2)) & 0x11) ^ x;
 	x = (((x << 1) & (x << 2)) & 0x88) ^ x;
@@ -731,7 +745,7 @@ uint8_t skinny64_sbox(uint8_t x){
 	x = (((x >> 2) & (x << 1)) & 0x22) ^ x;
 	x = ~x;
 	return ((x >> 1) & 0x77) | ((x << 3) & 0x88);
-}
+}*/
 
 uint8_t skinny64_inv_sbox(uint8_t x){
 	x = ~x;
