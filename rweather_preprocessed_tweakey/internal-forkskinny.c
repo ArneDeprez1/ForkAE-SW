@@ -22,7 +22,6 @@
 
 #include "internal-forkskinny.h"
 #include "internal-skinnyutil.h"
-#include "sbox_neon.h"
 
 /**
  * \brief 7-bit round constants for all ForkSkinny block ciphers.
@@ -116,14 +115,17 @@ static void forkskinny_128_256_round
     uint32_t s0, s1, s2, s3, temp;
     uint8_t rc;
 
-    /* Apply the S-box to all cells in the state */
-	skinny128_sbox_neon(state->S);
-
-	/* Load the state into local variables */
+    /* Load the state into local variables */
 	s0 = state->S[0];
 	s1 = state->S[1];
 	s2 = state->S[2];
 	s3 = state->S[3];
+
+	/* Apply the S-box to all cells in the state */
+	skinny128_sbox(s0);
+	skinny128_sbox(s1);
+	skinny128_sbox(s2);
+	skinny128_sbox(s3);
 
     /* XOR the round constant and the subkey for this round */
 	rc = RC[round];
@@ -275,15 +277,17 @@ static void forkskinny_128_256_inv_round
 	s1 ^= ks->row1[round] ^ (rc >> 4);
 	s2 ^= 0x02;
 
+    /* Apply the inverse of the S-box to all cells in the state */
+    skinny128_inv_sbox(s0);
+    skinny128_inv_sbox(s1);
+    skinny128_inv_sbox(s2);
+    skinny128_inv_sbox(s3);
+
     /* Save the local variables back to the state */
     state->S[0] = s0;
     state->S[1] = s1;
     state->S[2] = s2;
     state->S[3] = s3;
-
-    /* Apply the inverse of the S-box to all cells in the state */
-    skinny128_inv_sbox_neon(state->S);
-
 }
 
 void forkskinny_128_256_decrypt
@@ -435,14 +439,17 @@ static void forkskinny_128_384_round
     uint32_t s0, s1, s2, s3, temp;
     uint8_t rc;
 
-    /* Apply the S-box to all cells in the state */
-   	skinny128_sbox_neon(state->S);
+    /* Load the state into local variables */
+	s0 = state->S[0];
+	s1 = state->S[1];
+	s2 = state->S[2];
+	s3 = state->S[3];
 
-   	/* Load the state into local variables */
-   	s0 = state->S[0];
-   	s1 = state->S[1];
-   	s2 = state->S[2];
-   	s3 = state->S[3];
+	/* Apply the S-box to all cells in the state */
+	skinny128_sbox(s0);
+	skinny128_sbox(s1);
+	skinny128_sbox(s2);
+	skinny128_sbox(s3);
 
     /* XOR the round constant and the subkey for this round */
     rc = RC[round];
@@ -596,14 +603,17 @@ static void forkskinny_128_384_inv_round
     s1 ^= ks->row1[round] ^ (rc >> 4);
     s2 ^= 0x02;
 
+    /* Apply the inverse of the S-box to all cells in the state */
+    skinny128_inv_sbox(s0);
+    skinny128_inv_sbox(s1);
+    skinny128_inv_sbox(s2);
+    skinny128_inv_sbox(s3);
+
     /* Save the local variables back to the state */
     state->S[0] = s0;
     state->S[1] = s1;
     state->S[2] = s2;
     state->S[3] = s3;
-
-    /* Apply the inverse of the S-box to all cells in the state */
-    skinny128_inv_sbox_neon(state->S);
 }
 
 void forkskinny_128_384_decrypt
@@ -758,56 +768,17 @@ static void forkskinny_64_192_round
     uint16_t s0, s1, s2, s3, temp;
     uint8_t rc;
 
-    skinny64_sbox_neon(state->S);
-
     /* Load the state into local variables */
     s0 = state->S[0];
     s1 = state->S[1];
     s2 = state->S[2];
     s3 = state->S[3];
 
-    /* XOR the round constant and the subkey for this round */
-    rc = RC[round];
-    s0 ^= ks->row0[round] ^ ((rc & 0x0F) << 12) ^ 0x0020;
-    s1 ^= ks->row1[round] ^ ((rc & 0x70) << 8);
-    s2 ^= 0x2000;
-
-    /* Shift the cells in the rows right */
-    s1 = rightRotate4_16(s1);
-    s2 = rightRotate8_16(s2);
-    s3 = rightRotate12_16(s3);
-
-    /* Mix the columns */
-    s1 ^= s2;
-    s2 ^= s0;
-    temp = s3 ^ s2;
-    s3 = s2;
-    s2 = s1;
-    s1 = s0;
-    s0 = temp;
-
-    /* Save the local variables back to the state */
-    state->S[0] = s0;
-    state->S[1] = s1;
-    state->S[2] = s2;
-    state->S[3] = s3;
-
-}
-
-static void forkskinny_64_192_parallel_round
-    (forkskinny_64_192_state_t *state, forkskinny_64_192_state_t *state2, forkskinny_64_192_key_schedule_t *ks, unsigned round, unsigned round2)
-{
-    uint16_t s0, s1, s2, s3, temp;
-    uint8_t rc;
-
-    /* Apply the S-box to all cells in both states */
-    skinny64_parallel_sbox_neon(state->S, state2->S);
-
-    /* Load the first state into local variables */
-    s0 = state->S[0];
-    s1 = state->S[1];
-    s2 = state->S[2];
-    s3 = state->S[3];
+    /* Apply the S-box to all cells in the state */
+    skinny64_sbox(s0);
+    skinny64_sbox(s1);
+    skinny64_sbox(s2);
+    skinny64_sbox(s3);
 
     /* XOR the round constant and the subkey for this round */
     rc = RC[round];
@@ -835,37 +806,6 @@ static void forkskinny_64_192_parallel_round
     state->S[2] = s2;
     state->S[3] = s3;
 
-    /* Load the second state into local variables */
-	s0 = state2->S[0];
-	s1 = state2->S[1];
-	s2 = state2->S[2];
-	s3 = state2->S[3];
-
-	 /* XOR the round constant and the subkey for this round */
-	rc = RC[round2];
-	s0 ^= ks->row0[round2] ^ ((rc & 0x0F) << 12) ^ 0x0020;
-	s1 ^= ks->row1[round2] ^ ((rc & 0x70) << 8);
-	s2 ^= 0x2000;
-
-	/* Shift the cells in the rows right */
-	s1 = rightRotate4_16(s1);
-	s2 = rightRotate8_16(s2);
-	s3 = rightRotate12_16(s3);
-
-	/* Mix the columns */
-	s1 ^= s2;
-	s2 ^= s0;
-	temp = s3 ^ s2;
-	s3 = s2;
-	s2 = s1;
-	s1 = s0;
-	s0 = temp;
-
-	/* Save the local variables back to the state */
-	state2->S[0] = s0;
-	state2->S[1] = s1;
-	state2->S[2] = s2;
-	state2->S[3] = s3;
 }
 
 void forkskinny_64_192_encrypt
@@ -876,14 +816,15 @@ void forkskinny_64_192_encrypt
     forkskinny_64_192_key_schedule_t ks;
     unsigned round;
 
-    /* iterate key schedule */
-    if (output_left && output_right){
-    	forkskinny_64_192_init_tks(&ks, key, FORKSKINNY_64_192_ROUNDS_BEFORE + 2*FORKSKINNY_64_192_ROUNDS_AFTER);
-    }
-    else{
-    	forkskinny_64_192_init_tks(&ks, key, FORKSKINNY_64_192_ROUNDS_BEFORE + FORKSKINNY_64_192_ROUNDS_AFTER);
-    }
-    /* Unpack the input */
+	/* Iterate key schedule */
+	if (output_left && output_right){
+		forkskinny_64_192_init_tks(&ks, key, FORKSKINNY_64_192_ROUNDS_BEFORE + 2*FORKSKINNY_64_192_ROUNDS_AFTER);
+	}
+	else{
+		forkskinny_64_192_init_tks(&ks, key, FORKSKINNY_64_192_ROUNDS_BEFORE + FORKSKINNY_64_192_ROUNDS_AFTER);
+	}
+
+	/* Unpack the input */
     state.S[0] = be_load_word16(input);
     state.S[1] = be_load_word16(input + 2);
     state.S[2] = be_load_word16(input + 4);
@@ -896,29 +837,31 @@ void forkskinny_64_192_encrypt
 
     /* Determine which output blocks we need */
     if (output_left && output_right) {
-        /* Duplicate state at forking point */
-        forkskinny_64_192_state_t state2;
-    	state2.S[0] = state.S[0] ^ 0x1249U;
-    	state2.S[1] = state.S[1] ^ 0x36daU;
-    	state2.S[2] = state.S[2] ^ 0x5b7fU;
-    	state2.S[3] = state.S[3] ^ 0xec81U;
+        /* We need both outputs so save the state at the forking point */
+        uint16_t F[4];
+        F[0] = state.S[0];
+        F[1] = state.S[1];
+        F[2] = state.S[2];
+        F[3] = state.S[3];
 
-        /* Generate the both output blocks */
+        /* Generate the right output block */
         for (round = FORKSKINNY_64_192_ROUNDS_BEFORE;
                 round < (FORKSKINNY_64_192_ROUNDS_BEFORE +
                          FORKSKINNY_64_192_ROUNDS_AFTER); ++round) {
-        	forkskinny_64_192_parallel_round(&state, &state2, &ks, round, round+FORKSKINNY_64_192_ROUNDS_AFTER);
+            forkskinny_64_192_round(&state, &ks, round);
         }
         be_store_word16(output_right,     state.S[0]);
         be_store_word16(output_right + 2, state.S[1]);
         be_store_word16(output_right + 4, state.S[2]);
         be_store_word16(output_right + 6, state.S[3]);
-        be_store_word16(output_left,     state2.S[0]);
-		be_store_word16(output_left + 2, state2.S[1]);
-		be_store_word16(output_left + 4, state2.S[2]);
-		be_store_word16(output_left + 6, state2.S[3]);
+
+        /* Restore the state at the forking point */
+        state.S[0] = F[0];
+        state.S[1] = F[1];
+        state.S[2] = F[2];
+        state.S[3] = F[3];
     }
-    else if (output_left && !output_right) {
+    if (output_left) {
         /* Generate the left output block */
         state.S[0] ^= 0x1249U;  /* Branching constant */
         state.S[1] ^= 0x36daU;
@@ -987,14 +930,18 @@ static void forkskinny_64_192_inv_round
     s1 ^= ks->row1[round] ^ ((rc & 0x70) << 8);
     s2 ^= 0x2000;
 
+
+    /* Apply the inverse of the S-box to all cells in the state */
+    skinny64_inv_sbox(s0);
+    skinny64_inv_sbox(s1);
+    skinny64_inv_sbox(s2);
+    skinny64_inv_sbox(s3);
+
     /* Save the local variables back to the state */
     state->S[0] = s0;
     state->S[1] = s1;
     state->S[2] = s2;
     state->S[3] = s3;
-
-    /* Apply the inverse of the S-box to all cells in the state */
-    skinny64_inv_sbox_neon(state->S);
 }
 
 void forkskinny_64_192_decrypt
