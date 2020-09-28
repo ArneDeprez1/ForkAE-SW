@@ -25,6 +25,9 @@ This implementation is specifically designed for Arm processors with a [Neon SIM
 
 For the instance PAEF-ForkSkinny-64-192, an implementation is included that calculates the two branches of ForkSkinny in parallel.
 
+## Supercop
+The 'supercop' directory contains the same implementations as listed above but with the files organized in directories compliant with NIST and supercop guidelines.
+
 ## Documentation
 At this moment the repository contains only the source code of the different implementations and limited documentation.
 I plan on adding more detailed documentation and some example makefiles in the future.
