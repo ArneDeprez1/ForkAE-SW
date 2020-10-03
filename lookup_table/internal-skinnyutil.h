@@ -74,6 +74,21 @@ extern "C" {
                 ( row3        & 0x00FF0000U); \
     } while (0)
 
+#define skinny128_permute_tk_half(tk2, tk3) \
+    do { \
+        /* Permute the bottom half of the tweakey state in place, no swap */ \
+        uint32_t row2 = tk2; \
+        uint32_t row3 = tk3; \
+        row3 = (row3 << 16) | (row3 >> 16); \
+        tk2 = ((row2 >>  8) & 0x000000FFU) | \
+              ((row2 << 16) & 0x00FF0000U) | \
+              ( row3        & 0xFF00FF00U); \
+        tk3 = ((row2 >> 16) & 0x000000FFU) | \
+               (row2        & 0xFF000000U) | \
+              ((row3 <<  8) & 0x0000FF00U) | \
+              ( row3        & 0x00FF0000U); \
+    } while (0)
+
 #define skinny128_inv_permute_tk(tk) \
     do { \
         /* PT' = [8, 9, 10, 11, 12, 13, 14, 15, 2, 0, 4, 7, 6, 3, 5, 1] */ \
@@ -89,6 +104,21 @@ extern "C" {
                 ((row0 << 16) & 0xFF000000U) | \
                 ((row1 >> 16) & 0x000000FFU) | \
                 ((row1 <<  8) & 0x00FF0000U); \
+    } while (0)
+
+#define skinny128_inv_permute_tk_half(tk0, tk1) \
+    do { \
+        /* Permute the top half of the tweakey state in place, no swap */ \
+        uint32_t row0 = tk0; \
+        uint32_t row1 = tk1; \
+        tk0 = ((row0 >> 16) & 0x000000FFU) | \
+              ((row0 <<  8) & 0x0000FF00U) | \
+              ((row1 << 16) & 0x00FF0000U) | \
+              ( row1        & 0xFF000000U); \
+        tk1 = ((row0 >> 16) & 0x0000FF00U) | \
+              ((row0 << 16) & 0xFF000000U) | \
+              ((row1 >> 16) & 0x000000FFU) | \
+              ((row1 <<  8) & 0x00FF0000U); \
     } while (0)
 
 /*
@@ -318,6 +348,61 @@ do { \
     x = ~x; \
     x = ((x << 1) & 0xEEEEU) | ((x >> 3) & 0x1111U); \
 } while (0)
+
+#define rows_to_columns_32(column0, column1, column2, column3, row0, row1, row2, row3) \
+	do { \
+	column0 =  (row3 & 0xFF)     << 24|(row2 & 0xFF)       << 16|(row1 & 0xFF)       << 8 | (row0 & 0xFF);\
+	column1 =  (row3 & 0xFF00)   << 16|(row2 & 0xFF00)     << 8 |(row1 & 0xFF00)          | (row0>>8 & 0xFF);\
+	column2 =  (row3 & 0xFF0000) << 8 |(row2 & 0xFF0000)        |(row1 & 0xFF0000)   >> 8 | (row0>>16 & 0xFF);\
+	column3 =  (row3 & 0xFF000000)    |(row2 & 0xFF000000) >> 8 |(row1 & 0xFF000000) >> 16| (row0>>24 & 0xFF);\
+	} while(0)
+
+#define columns_to_rows_32(row0, row1, row2, row3, column0, column1, column2, column3) rows_to_columns_32(row0, row1, row2, row3, column0, column1, column2, column3)
+
+#define load_column_8(dest, src) \
+	do { \
+		dest[0] = (src[12]) << 24 | (src[8])  << 16 | (src[4]) << 8 | (src[0]); \
+		dest[1] = (src[13]) << 24 | (src[9])  << 16 | (src[5]) << 8 | (src[1]); \
+		dest[2] = (src[14]) << 24 | (src[10]) << 16 | (src[6]) << 8 | (src[2]); \
+		dest[3] = (src[15]) << 24 | (src[11]) << 16 | (src[7]) << 8 | (src[3]); \
+	} while(0)
+
+#define store_column_8(dest, src) \
+	do { \
+		dest[0] = (uint8_t) (src[0]); 	 dest[1] = (uint8_t) (src[1]); 	  dest[2] = (uint8_t) (src[2]);    dest[3] = (uint8_t) (src[3]); \
+		dest[4] = (uint8_t) (src[0]>>8); dest[5] = (uint8_t) (src[1]>>8); dest[6] = (uint8_t) (src[2]>>8); dest[7] = (uint8_t) (src[3]>>8); \
+		dest[8] = (uint8_t) (src[0]>>16);dest[9] = (uint8_t) (src[1]>>16);dest[10]= (uint8_t) (src[2]>>16);dest[11]= (uint8_t)(src[3]>>16); \
+		dest[12]= (uint8_t) (src[0]>>24);dest[13]= (uint8_t) (src[1]>>24);dest[14]= (uint8_t) (src[2]>>24);dest[15]= (uint8_t)(src[3]>>24); \
+	} while(0)
+
+
+#define TK_to_column_256(columns, state) \
+	do { \
+		uint32_t TK0 = state->TK1[0] ^ state->TK2[0];\
+		uint32_t TK1 = state->TK1[1] ^ state->TK2[1]; \
+		uint32_t tk00 = TK0 & 0xFF; \
+		uint32_t tk01 = TK0 & 0xFF00;\
+		uint32_t tk02 = TK0 & 0xFF0000;\
+		uint32_t tk03 = TK0 & 0xFF000000;\
+		columns[0] = tk00 << 24 | (TK1 & 0xFF000000) >> 8 	| tk00 << 8  | tk00; \
+		columns[1] = tk01 << 16 | (TK1 & 0xFF) 	   << 16	| tk01  	 | tk01 >> 8; \
+		columns[2] = tk02 << 8  | (TK1 & 0xFF00)     << 8 	| tk02 >> 8  | tk02 >> 16; \
+		columns[3] = tk03       | (TK1 & 0xFF0000)  		| tk03 >> 16 | tk03 >> 24; \
+	} while(0)
+
+#define TK_to_column_384(columns, state) \
+do { \
+    uint32_t TK0 = state->TK1[0] ^ state->TK2[0] ^ state->TK3[0];\
+    uint32_t TK1 = state->TK1[1] ^ state->TK2[1] ^ state->TK3[1];\
+    uint32_t tk00 = TK0 & 0xFF; \
+    uint32_t tk01 = TK0 & 0xFF00;\
+    uint32_t tk02 = TK0 & 0xFF0000;\
+    uint32_t tk03 = TK0 & 0xFF000000;\
+    columns[0] = tk00 << 24 | (TK1 & 0xFF000000) >> 8 	| tk00 << 8  | tk00; \
+    columns[1] = tk01 << 16 | (TK1 & 0xFF) 	   << 16	| tk01  	 | tk01 >> 8; \
+    columns[2] = tk02 << 8  | (TK1 & 0xFF00)     << 8 	| tk02 >> 8  | tk02 >> 16; \
+    columns[3] = tk03       | (TK1 & 0xFF0000)  		| tk03 >> 16 | tk03 >> 24; \
+} while(0)
 
 /** @endcond */
 
