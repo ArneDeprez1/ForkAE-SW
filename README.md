@@ -3,6 +3,15 @@ This directory contains software implementations of the lightweight cipher [Fork
 
 ForkAE is a second round candidate of the [NIST lightweight cryptography competition](https://csrc.nist.gov/projects/lightweight-cryptography/round-2-candidates), the specification of the cipher, and its different instances can be found [here](https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/round-2/spec-doc-rnd2/forkae-spec-round2.pdf)
 
+## Paper & CARDIS 2020
+A [paper](https://eprint.iacr.org/2020/1295) was published that contains more detailed explanations and results for these implementations.  
+The paper was presented at [CARDIS 2020](https://cardis2020.its.uni-luebeck.de/index.html).
+
+Below you can find the links to the slides and presentation:  
+[paper](https://cardis2020.its.uni-luebeck.de/files/CARDIS2020_Deprez_OptimizedSoftwareImplementations_paper.pdf)  
+[slides](https://cardis2020.its.uni-luebeck.de/files/CARDIS2020_Deprez_OptimizedSoftwareImplementations_slides.pdf)  
+[presentation video](https://www.youtube.com/watch?v=HfNWNtrC_OQ)
+
 ## 8-bit Implementation
 In the 8-bit implementation, the ForkSkinny primitive of ForkAE and its round function and tweakey schedule are implemented in C with 8-bit variables. This implementation was mainly used as as an example of how ForkAE can be implemented using byte-sized words and as a stepping stone in designing more optimized 32-bit implementations. 
 
