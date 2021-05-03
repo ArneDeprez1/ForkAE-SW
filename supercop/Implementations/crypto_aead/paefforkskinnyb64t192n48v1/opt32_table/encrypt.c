@@ -10,7 +10,7 @@ int crypto_aead_encrypt
      const unsigned char *k)
 {
     return forkae_paef_64_192_aead_encrypt
-        (c, clen, m, mlen, a, adlen, nsec, npub, k);
+        (c, clen, m, mlen, ad, adlen, nsec, npub, k);
 }
 
 int crypto_aead_decrypt
