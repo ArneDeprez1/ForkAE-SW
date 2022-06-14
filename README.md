@@ -40,3 +40,6 @@ The 'supercop' directory contains the same implementations as listed above but w
 ## Documentation
 At this moment the repository contains only the source code of the different implementations and limited documentation.
 I plan on adding more detailed documentation and some example makefiles in the future.
+
+## Contact
+If you have questions about this software you can send an email to <arne.deprez1@gmail.com>.
